@@ -15,10 +15,6 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    curve.cpp \
-    curves.cpp
+SOURCES += main.cpp
 
-HEADERS += \
-    curve.h \
-    curves.h
+HEADERS +=
