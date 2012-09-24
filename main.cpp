@@ -2,7 +2,10 @@
 #include <QDateTime>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QFutureSynchronizer>
+#include <QtConcurrentRun>
 #include <iostream>
+#include <vector>
 
 #include <iostream>
 #include <algorithm>
@@ -13,7 +16,7 @@
 
 int CURVE_NUMBER = 0;
 float distanceMatrix[MAX_CURVE_NUMBER][MAX_CURVE_NUMBER][2][2];
-int bestPermutation[MAX_CURVE_NUMBER];
+std::vector<int> bestPermutation;
 int bestCurvePointOrder = 0;
 float bestDistance = 150000;
 
@@ -30,7 +33,7 @@ struct Curve {
 
 Curve curves[MAX_CURVE_NUMBER];
 
-float calculateDistance(int const * permutation, int curvesPointOrder, float localBestDistance) {
+float calculateDistance(std::vector<int> const & permutation, int curvesPointOrder, float localBestDistance) {
     float resultDistance = 0;
     int currentCurveStartPoint = 0;
     int previousCurveEndPoint = !(curvesPointOrder & 1);
@@ -46,28 +49,36 @@ float calculateDistance(int const * permutation, int curvesPointOrder, float loc
     return resultDistance;
 }
 
-float setNewDistance(float distance, int const * permutation, int curvePointOrder) {
+float setNewDistance(float distance, std::vector<int> const & permutation, int curvePointOrder) {
     static QMutex mutex;
     QMutexLocker locker(&mutex);
     if (distance < bestDistance) {
         bestDistance = distance;
-        memcpy(bestPermutation, permutation, sizeof(int) * CURVE_NUMBER);
+        bestPermutation = permutation;
         bestCurvePointOrder = curvePointOrder;
     }
     return bestDistance;
 }
 
-void calculateDistances(int const * permutation, float localBestDistance)
+float calculateDistances(std::vector<int> permutation, float localBestDistance)
 {
     for (int i = 0; i < qPow(CURVE_NUMBER, 2); i++) {
         float distance = calculateDistance(permutation, i, bestDistance);
         if (distance < localBestDistance) {
             localBestDistance = setNewDistance(distance, permutation, i);
-            bestDistance = distance;
-            memcpy(bestPermutation, permutation, sizeof(int) * CURVE_NUMBER);
-            bestCurvePointOrder = i;
         }
     }
+    return localBestDistance;
+}
+
+void calculate1000Distances(std::vector<int> permutation, float localBestDistance)
+{
+    int i = 0;
+    do {
+        localBestDistance = calculateDistances(permutation, localBestDistance);
+        i++;
+    }
+    while (i < 1000 && std::next_permutation (permutation.begin(), permutation.end()));
 }
 
 
@@ -124,16 +135,20 @@ int main(int, char **)
 
     createDistanceMatrix();
 
-    int currentPermutation[MAX_CURVE_NUMBER];
+    std::vector<int> currentPermutation(CURVE_NUMBER);
 
     for (int i = 0; i < CURVE_NUMBER; i++) {
         currentPermutation[i] = i;
     }
 
+    QFutureSynchronizer<void> synchronizer;
+    int i = 0;
     do {
-        //showPermutation(currentPermutation);
-        calculateDistances(currentPermutation, bestDistance);
-    } while ( std::next_permutation (currentPermutation, currentPermutation + CURVE_NUMBER) );
+        if (i % 1000 == 0)
+            synchronizer.addFuture(QtConcurrent::run(calculate1000Distances, currentPermutation, bestDistance));
+        ++i;
+    } while (std::next_permutation (currentPermutation.begin(), currentPermutation.end()));
+    synchronizer.waitForFinished();
 
     std::cout << "result: " << std::endl;
     std::cout << "distance is " << bestDistance << std::endl;
