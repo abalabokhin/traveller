@@ -1,10 +1,15 @@
-#include <QCoreApplication>
+#include <QApplication>
 #include <QDateTime>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QFutureSynchronizer>
-#include <QtConcurrentRun>
+#include <QRunnable>
+#include <QThreadPool>
+
+#include <QImage>
+#include <QPainter>
+
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include <iostream>
@@ -17,8 +22,10 @@
 int CURVE_NUMBER = 0;
 float distanceMatrix[MAX_CURVE_NUMBER][MAX_CURVE_NUMBER][2][2];
 std::vector<int> bestPermutation;
-int bestCurvePointOrder = 0;
+int bestCurvePointOrderInt = 0;
+std::vector<int> bestCurvePointOrder;
 float bestDistance = 150000;
+QMutex * mutex;
 
 struct Curve {
     Curve(float x0 = 0, float y0 = 0, float x1 = 0, float y1 = 0, float s = 0)
@@ -55,14 +62,14 @@ float setNewDistance(float distance, std::vector<int> const & permutation, int c
     if (distance < bestDistance) {
         bestDistance = distance;
         bestPermutation = permutation;
-        bestCurvePointOrder = curvePointOrder;
+        bestCurvePointOrderInt = curvePointOrder;
     }
     return bestDistance;
 }
 
 float calculateDistances(std::vector<int> permutation, float localBestDistance)
 {
-    for (int i = 0; i < qPow(CURVE_NUMBER, 2); i++) {
+    for (int i = 0; i < qPow(2, CURVE_NUMBER); i++) {
         float distance = calculateDistance(permutation, i, bestDistance);
         if (distance < localBestDistance) {
             localBestDistance = setNewDistance(distance, permutation, i);
@@ -71,16 +78,30 @@ float calculateDistances(std::vector<int> permutation, float localBestDistance)
     return localBestDistance;
 }
 
-void calculate1000Distances(std::vector<int> permutation, float localBestDistance)
+void calculatePackOfDistances(std::vector<int> permutation, float localBestDistance, long distancesInPack)
 {
-    int i = 0;
+    long i = 0;
     do {
         localBestDistance = calculateDistances(permutation, localBestDistance);
         i++;
     }
-    while (i < 1000 && std::next_permutation (permutation.begin(), permutation.end()));
+    while (i < distancesInPack && std::next_permutation (permutation.begin(), permutation.end()));
 }
 
+class MyThread : public QRunnable {
+public:
+    MyThread(std::vector<int> const & permutation, float localBestDistance, long distancesInPack)
+        :permutation(permutation), localBestDistance(localBestDistance), distancesInPack(distancesInPack)
+    {}
+protected:
+    virtual void run() {
+       calculatePackOfDistances(permutation, localBestDistance, distancesInPack);
+    }
+private:
+    std::vector<int> permutation;
+    float localBestDistance;
+    long distancesInPack;
+};
 
 void showPermutation(int const * permutation) {
     for (int i = 0; i < CURVE_NUMBER; i++) {
@@ -97,7 +118,11 @@ inline float calculateDistance(float x0, float y0, float x1, float y1)
 float createDistanceMatrix() {
     float curveLenghtsSum = 0;
     for (int i = 0; i < CURVE_NUMBER; i++) {
-        for (int j = 0; j < i; j++) {
+        for (int j = i; j < CURVE_NUMBER; j++) {
+            if (i == 2 && j == 3) {
+                int temp = 6;
+                temp++;
+            }
             distanceMatrix[j][i][0][0] = distanceMatrix[i][j][0][0] =
                     calculateDistance(curves[i].x0, curves[i].y0, curves[j].x0, curves[j].y0);
             distanceMatrix[j][i][1][0] = distanceMatrix[i][j][0][1] =
@@ -116,50 +141,120 @@ float createDistanceMatrix() {
     return curveLenghtsSum;
 }
 
-int main(int, char **)
-{
-    QDateTime begin = QDateTime::currentDateTime();
-    /// TODO: reading from file
-    curves[0] = Curve(1, 1, 0, 0, 3);
-    curves[1] = Curve(2, 2, 3, 3, 5);
-    curves[2] = Curve(4, 4, 5, 5, 3);
-    curves[3] = Curve(6, 6, 7, 7, 5);
-    curves[4] = Curve(8, 8, 9, 9, 3);
-    curves[5] = Curve(10, 10, 11, 11, 5);
-    curves[6] = Curve(12, 12, 13, 13, 3);
-    curves[7] = Curve(14, 14, 15, 15, 5);
-    curves[8] = Curve(16, 16, 17, 17, 5);
-    curves[9] = Curve(18, 18, 19, 19, 5);
-    curves[10] = Curve(20, 20, 21, 21, 5);
-    CURVE_NUMBER = 11;
-
-    createDistanceMatrix();
-
+void doBruteForce() {
     std::vector<int> currentPermutation(CURVE_NUMBER);
 
     for (int i = 0; i < CURVE_NUMBER; i++) {
         currentPermutation[i] = i;
     }
 
-    QFutureSynchronizer<void> synchronizer;
-    int i = 0;
+    QThreadPool threadPool;
+    threadPool.setMaxThreadCount(8);
+    long i = 0;
+    // 10! per 8 threads.
+    long distancesInPack = 3628800 / 8;
     do {
-        if (i % 1000 == 0)
-            synchronizer.addFuture(QtConcurrent::run(calculate1000Distances, currentPermutation, bestDistance));
+        if (i % distancesInPack == 0) {
+            threadPool.start(new MyThread(currentPermutation, bestDistance, distancesInPack));
+        }
         ++i;
     } while (std::next_permutation (currentPermutation.begin(), currentPermutation.end()));
-    synchronizer.waitForFinished();
+    threadPool.waitForDone();
 
-    std::cout << "result: " << std::endl;
-    std::cout << "distance is " << bestDistance << std::endl;
-    std::cout << "ponts order in curves is: ";
-
-
-    int curvesPointOrder = bestCurvePointOrder;
     for (int i = 0; i < CURVE_NUMBER; i++) {
-        int currentCurveStartPoint = curvesPointOrder & 1;
-        std::cout << bestPermutation[i] << "(" << currentCurveStartPoint << ", " << !currentCurveStartPoint << "), ";
-        curvesPointOrder = curvesPointOrder >> 1;
+        bestCurvePointOrder.push_back(bestCurvePointOrderInt & 1);
+        bestCurvePointOrderInt = bestCurvePointOrderInt >> 1;
     }
+}
+
+void doAntColony() {
+
+}
+
+void visualizeIt() {
+    QImage image(1000, 1000, QImage::Format_RGB32);
+    QPainter painter(&image);
+
+    QPointF firstCurvePoint;
+    QPointF lastCurvePoint;
+    QPointF previousCurveLastPoint;
+
+    int i = 0;
+    if (!bestCurvePointOrder[i]) {
+        firstCurvePoint = QPointF(curves[bestPermutation[i]].x0, curves[bestPermutation[i]].y0);
+        lastCurvePoint = QPointF(curves[bestPermutation[i]].x1, curves[bestPermutation[i]].y1);
+    } else {
+        firstCurvePoint = QPointF(curves[bestPermutation[i]].x1, curves[bestPermutation[i]].y1);
+        lastCurvePoint = QPointF(curves[bestPermutation[i]].x0, curves[bestPermutation[i]].y0);
+    }
+
+    painter.setPen(Qt::black);
+    QPointF (pointToText) = (firstCurvePoint + lastCurvePoint) / 2;
+    painter.drawText(pointToText, QString::number(bestPermutation[i]) + "-" + QString::number(i));
+
+
+    painter.setPen(Qt::blue);
+    painter.drawLine(firstCurvePoint, lastCurvePoint);
+
+    i++;
+    for (; i < CURVE_NUMBER; i++) {
+        previousCurveLastPoint = lastCurvePoint;
+        if (!bestCurvePointOrder[i]) {
+            firstCurvePoint = QPointF(curves[bestPermutation[i]].x0, curves[bestPermutation[i]].y0);
+            lastCurvePoint = QPointF(curves[bestPermutation[i]].x1, curves[bestPermutation[i]].y1);
+        } else {
+            firstCurvePoint = QPointF(curves[bestPermutation[i]].x1, curves[bestPermutation[i]].y1);
+            lastCurvePoint = QPointF(curves[bestPermutation[i]].x0, curves[bestPermutation[i]].y0);
+        }
+        painter.setPen(Qt::black);
+        QPointF (pointToText) = (firstCurvePoint + lastCurvePoint) / 2;
+        painter.drawText(pointToText, QString::number(bestPermutation[i]) + "-" + QString::number(i));
+        painter.setPen(Qt::red);
+        painter.drawLine(previousCurveLastPoint, firstCurvePoint);
+        painter.setPen(Qt::blue);
+        painter.drawLine(firstCurvePoint, lastCurvePoint);
+    }
+    painter.end();
+    image.save("output.png");
+}
+
+int main(int argc, char * argv[])
+{
+    QDateTime begin = QDateTime::currentDateTime();
+    mutex = new QMutex();
+    std::ifstream istream("input.txt");
+    int curveNumber = 0;
+    char commaCh;
+    while (!istream.eof()) {
+        istream >> curves[curveNumber].x0;
+        istream >> commaCh;
+        istream >> curves[curveNumber].y0;
+        istream >> commaCh;
+        istream >> curves[curveNumber].x1;
+        istream >> commaCh;
+        istream >> curves[curveNumber].y1;
+        istream >> commaCh;
+        istream >> curves[curveNumber].s;
+        curveNumber++;
+    }
+
+    CURVE_NUMBER = curveNumber;
+    float curveLenghtsSum = createDistanceMatrix();
+
+    if (curveNumber <= 9)
+        doBruteForce();
+    else
+        doAntColony();
+
+    std::ofstream outputStream("output.txt");
+    std::ofstream resultStream("result.txt");
+    resultStream << bestDistance + curveLenghtsSum;
+
+    for (int i = 0; i < CURVE_NUMBER; i++) {
+        outputStream << bestPermutation[i] << " " << bestCurvePointOrder[i] << std::endl;
+    }
+    delete mutex;
     std::cout << "time in secs is " << begin.msecsTo(QDateTime::currentDateTime()) / 1000 << std::endl;
+    QApplication app(argc, argv);
+    visualizeIt();
 }

@@ -1,1 +1,7 @@
 traveller.pro.user
+Makefile*
+debug
+release
+output*
+result.txt
+vc90.pdb
