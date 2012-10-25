@@ -6,7 +6,6 @@
 
 QT       += core
 
-QT       += gui
 
 TARGET = traveller
 CONFIG   += console
@@ -15,6 +14,17 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    curveunits.cpp \
+    curveunit.cpp \
+    bruteForce.cpp \
+    orientedcurve.cpp \
+    localOptimization.cpp
 
-HEADERS +=
+HEADERS += \
+    curveunits.h \
+    curveunit.h \
+    global.h \
+    bruteForce.h \
+    orientedcurve.h \
+    localOptimization.h
