@@ -28,7 +28,7 @@ float setNewDistance(float distance, std::vector<int> const & permutation, int c
 float calculateDistances(std::vector<int> permutation, float localBestDistance);
 
 void calculatePackOfDistances(std::vector<int> permutation, float localBestDistance, long distancesInPack);
-
+/// вычислить перестановку перебором. комментарии про функции в cpp файле
 void doBruteForce();
 
 #endif // BRUTEFORCE_H

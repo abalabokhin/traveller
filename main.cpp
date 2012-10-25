@@ -3,9 +3,6 @@
 #include <QFile>
 #include <QTextStream>
 
-//#include <QImage>
-//#include <QPainter>
-
 #include <iostream>
 
 #include <algorithm>
@@ -15,11 +12,6 @@
 #include "curveunits.h"
 #include "localOptimization.h"
 #include "bruteForce.h"
-
-/// TODO
-/// ДГДtДuД|ДpДДДО ДqДВДЕДДДЖДАДВДГДu ДqДАД|ДuДu ДАДАДБ
-/// ДВДpДГДГДДДpДrДyДДДО Д{ДАД}Д}ДuД~ДДДpДВДyДy
-/// ДГДtДuД|ДpДДДО ДЙДДДАДqДН Дr ДЖДpДzД|Дu main.cpp ДqДНД|ДА ДqДАД|ДОДКДu ДЖДЕД~Д{ДИДyДz - ДpД|ДС ДrДГДСД{ДpДС ДyД~ДyДИДyДpД|ДyДxДpДИДyДС
 
 int CURVE_NUMBER = 0;
 float distanceMatrix[MAX_CURVE_NUMBER][MAX_CURVE_NUMBER][2][2];
@@ -45,6 +37,7 @@ inline float calculateDistance(float x0, float y0, float x1, float y1)
     return qSqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
+/// создать матрицу рассто€ний
 float createDistanceMatrix() {
     float curveLenghtsSum = 0;
     for (int i = 0; i < CURVE_NUMBER; i++) {
@@ -73,7 +66,9 @@ float createDistanceMatrix() {
 
 void doNextNeighbor() {
     CurveUnits units;
+	/// выстроить кандидата на результат
     units.createBestWay();
+	/// искать лучший путь, пока можно и пока не истечет врем€
     while (findBetterWay(4) && beginTime.msecsTo(QDateTime::currentDateTime()) < 9000);
 }
 
@@ -133,7 +128,7 @@ int main(int argc, char * argv[])
     QFile data(inputFileName);
     if (!data.open(QFile::ReadOnly))
         return -1;
-
+	/// —читывание данных из файла
     QTextStream out(&data);
     int curveNumber = 0;
     while (!out.atEnd()) {
@@ -150,13 +145,16 @@ int main(int argc, char * argv[])
     }
 
     CURVE_NUMBER = curveNumber;
+	/// построить матрицу рассто€ний
     float curveLenghtsSum = createDistanceMatrix();
-
     if (curveNumber <= 8)
+	/// запустить брутфорс при малом количестве кривых
         doBruteForce();
     else
+	/// запустить алгоритм поиска ближайших соседей
         doNextNeighbor();
 
+	/// вывод конечных данных
     QFile output(outputFileName);
     output.open(QFile::WriteOnly);
 
