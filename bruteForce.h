@@ -1,7 +1,6 @@
 #ifndef BRUTEFORCE_H
 #define BRUTEFORCE_H
 
-#include <QApplication>
 #include <QDateTime>
 #include <QMutex>
 #include <QMutexLocker>
@@ -28,7 +27,7 @@ float setNewDistance(float distance, std::vector<int> const & permutation, int c
 float calculateDistances(std::vector<int> permutation, float localBestDistance);
 
 void calculatePackOfDistances(std::vector<int> permutation, float localBestDistance, long distancesInPack);
-/// вычислить перестановку перебором. комментарии про функции в cpp файле
+/// РІС‹С‡РёСЃР»РёС‚СЊ РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ РїРµСЂРµР±РѕСЂРѕРј. РєРѕРјРјРµРЅС‚Р°СЂРёРё РїСЂРѕ С„СѓРЅРєС†РёРё РІ cpp С„Р°Р№Р»Рµ
 void doBruteForce();
 
 #endif // BRUTEFORCE_H

@@ -3,7 +3,7 @@
 
 #include "localOptimization.h"
 
-/// вычисление дистанции для последовательности кривых
+/// РІС‹С‡РёСЃР»РµРЅРёРµ РґРёСЃС‚Р°РЅС†РёРё РґР»СЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РєСЂРёРІС‹С…
 float calculateSumSeveralCurvesInRow(OrientedCurve * firstCurve, QList<OrientedCurve> curves, OrientedCurve * lastCurve) {
     float distance = firstCurve ? distanceMatrix[firstCurve->curveNumber][curves.first().curveNumber][!firstCurve->beginPoint][curves.first().beginPoint] : 0;
     OrientedCurve previousCurve = curves.first();
@@ -21,8 +21,8 @@ bool findBetterWay(int permutationSize) {
     for (int i = 0; i < permutationSize; i++) {
         beginPermutation.append(i);
     }
-	/// перетасовка всех вершин в лучшей последовательности размером permutationSize.
-	/// поиск лучшего решения
+	/// РїРµСЂРµС‚Р°СЃРѕРІРєР° РІСЃРµС… РІРµСЂС€РёРЅ РІ Р»СѓС‡С€РµР№ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё СЂР°Р·РјРµСЂРѕРј permutationSize.
+	/// РїРѕРёСЃРє Р»СѓС‡С€РµРіРѕ СЂРµС€РµРЅРёСЏ
     for (int curveI = 0; curveI < CURVE_NUMBER - permutationSize + 1; curveI++) {
         QList<OrientedCurve> localCurves = bestCurvesOrder.mid(curveI, permutationSize);
         OrientedCurve * previousCurve = (curveI == 0 ? NULL : &bestCurvesOrder[curveI - 1]);
@@ -30,7 +30,7 @@ bool findBetterWay(int permutationSize) {
         float currentBestDistance =
             calculateSumSeveralCurvesInRow(previousCurve, localCurves, nextCurve);
         int maxPointsOrder = qPow(2, permutationSize);
-		/// проходим все возможные локальные перестановки
+		/// РїСЂРѕС…РѕРґРёРј РІСЃРµ РІРѕР·РјРѕР¶РЅС‹Рµ Р»РѕРєР°Р»СЊРЅС‹Рµ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРё
         for (int i = 0; i < maxPointsOrder; i++) {
             int localCurvesPointOrder = i;
             for (int j = 0; j < permutationSize; j++) {
@@ -45,7 +45,7 @@ bool findBetterWay(int permutationSize) {
                 }
                 float currentDistance =
                     calculateSumSeveralCurvesInRow(previousCurve, localChain, nextCurve);
-				/// проверка текущей перестановки
+				/// РїСЂРѕРІРµСЂРєР° С‚РµРєСѓС‰РµР№ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРё
                 if (currentDistance < currentBestDistance) {
                     for (int k = 0; k < permutationSize; ++k) {
                         bestCurvesOrder[curveI + k] = localChain[k];

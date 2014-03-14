@@ -3,7 +3,7 @@
 
 #include <QList>
 #include "orientedcurve.h"
-/// одно объединение соединенных кривых
+/// РѕРґРЅРѕ РѕР±СЉРµРґРёРЅРµРЅРёРµ СЃРѕРµРґРёРЅРµРЅРЅС‹С… РєСЂРёРІС‹С…
 struct CurveUnit
 {
     CurveUnit(int curveNumber = 0);

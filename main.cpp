@@ -1,4 +1,3 @@
-#include <QApplication>
 #include <QDateTime>
 #include <QFile>
 #include <QTextStream>
@@ -37,7 +36,7 @@ inline float calculateDistance(float x0, float y0, float x1, float y1)
     return qSqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
-/// создать матрицу расстояний
+/// СЃРѕР·РґР°С‚СЊ РјР°С‚СЂРёС†Сѓ СЂР°СЃСЃС‚РѕСЏРЅРёР№
 float createDistanceMatrix() {
     float curveLenghtsSum = 0;
     for (int i = 0; i < CURVE_NUMBER; i++) {
@@ -66,9 +65,9 @@ float createDistanceMatrix() {
 
 void doNextNeighbor() {
     CurveUnits units;
-	/// выстроить кандидата на результат
+	/// РІС‹СЃС‚СЂРѕРёС‚СЊ РєР°РЅРґРёРґР°С‚Р° РЅР° СЂРµР·СѓР»СЊС‚Р°С‚
     units.createBestWay();
-	/// искать лучший путь, пока можно и пока не истечет время
+	/// РёСЃРєР°С‚СЊ Р»СѓС‡С€РёР№ РїСѓС‚СЊ, РїРѕРєР° РјРѕР¶РЅРѕ Рё РїРѕРєР° РЅРµ РёСЃС‚РµС‡РµС‚ РІСЂРµРјСЏ
     while (findBetterWay(4) && beginTime.msecsTo(QDateTime::currentDateTime()) < 9000);
 }
 
@@ -128,7 +127,7 @@ int main(int argc, char * argv[])
     QFile data(inputFileName);
     if (!data.open(QFile::ReadOnly))
         return -1;
-	/// Считывание данных из файла
+	/// РЎС‡РёС‚С‹РІР°РЅРёРµ РґР°РЅРЅС‹С… РёР· С„Р°Р№Р»Р°
     QTextStream out(&data);
     int curveNumber = 0;
     while (!out.atEnd()) {
@@ -145,16 +144,16 @@ int main(int argc, char * argv[])
     }
 
     CURVE_NUMBER = curveNumber;
-	/// построить матрицу расстояний
+	/// РїРѕСЃС‚СЂРѕРёС‚СЊ РјР°С‚СЂРёС†Сѓ СЂР°СЃСЃС‚РѕСЏРЅРёР№
     float curveLenghtsSum = createDistanceMatrix();
     if (curveNumber <= 8)
-	/// запустить брутфорс при малом количестве кривых
+	/// Р·Р°РїСѓСЃС‚РёС‚СЊ Р±СЂСѓС‚С„РѕСЂСЃ РїСЂРё РјР°Р»РѕРј РєРѕР»РёС‡РµСЃС‚РІРµ РєСЂРёРІС‹С…
         doBruteForce();
     else
-	/// запустить алгоритм поиска ближайших соседей
+	/// Р·Р°РїСѓСЃС‚РёС‚СЊ Р°Р»РіРѕСЂРёС‚Рј РїРѕРёСЃРєР° Р±Р»РёР¶Р°Р№С€РёС… СЃРѕСЃРµРґРµР№
         doNextNeighbor();
 
-	/// вывод конечных данных
+	/// РІС‹РІРѕРґ РєРѕРЅРµС‡РЅС‹С… РґР°РЅРЅС‹С…
     QFile output(outputFileName);
     output.open(QFile::WriteOnly);
 

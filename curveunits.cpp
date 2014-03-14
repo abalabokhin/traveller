@@ -11,14 +11,14 @@ CurveUnits::CurveUnits()
 
 void CurveUnits::createBestWay()
 {
-/// полка юнитов не станет 1
+/// РїРѕР»РєР° СЋРЅРёС‚РѕРІ РЅРµ СЃС‚Р°РЅРµС‚ 1
     while (units.size() > 1) {
         float bestDistanceBetweenTwoPoints = 1500;
         int bestUnit1 = 0;
         int bestLinkedPointInFirstCurve = 0;
         int bestUnit2 = 0;
         int bestLinkedPointInSecondCurve = 0;
-		/// поиск минимальной дистанции
+		/// РїРѕРёСЃРє РјРёРЅРёРјР°Р»СЊРЅРѕР№ РґРёСЃС‚Р°РЅС†РёРё
         for (int unit1 = 0; unit1 < units.size() - 1; ++unit1) {
             for (int unit2 = unit1 + 1; unit2 < units.size(); ++unit2) {			
                 for (int i = 0; i < 2; i++) {
@@ -42,7 +42,7 @@ void CurveUnits::createBestWay()
                 }
             }
         }
-		/// соединение найденных юнитов
+		/// СЃРѕРµРґРёРЅРµРЅРёРµ РЅР°Р№РґРµРЅРЅС‹С… СЋРЅРёС‚РѕРІ
         units[bestUnit1].AddUnit(units[bestUnit2], bestLinkedPointInFirstCurve, bestLinkedPointInSecondCurve, bestDistanceBetweenTwoPoints);
         units.removeAt(bestUnit2);
     }

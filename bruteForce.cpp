@@ -4,7 +4,7 @@ std::vector<int> bestPermutation;
 int bestCurvePointOrderInt;
 QSharedPointer<QMutex> mutex(new QMutex());
 
-/// вычислить перестановку для дистанции с концами
+/// РІС‹С‡РёСЃР»РёС‚СЊ РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ РґР»СЏ РґРёСЃС‚Р°РЅС†РёРё СЃ РєРѕРЅС†Р°РјРё
 float calculateDistance(std::vector<int> const & permutation, int curvesPointOrder, float localBestDistance) {
     float resultDistance = 0;
     int currentCurveStartPoint = 0;
@@ -20,7 +20,7 @@ float calculateDistance(std::vector<int> const & permutation, int curvesPointOrd
     }
     return resultDistance;
 }
-/// установка новой лучшей дистанции
+/// СѓСЃС‚Р°РЅРѕРІРєР° РЅРѕРІРѕР№ Р»СѓС‡С€РµР№ РґРёСЃС‚Р°РЅС†РёРё
 float setNewDistance(float distance, std::vector<int> const & permutation, int curvePointOrder) {
     static QMutex mutex;
     QMutexLocker locker(&mutex);
@@ -31,7 +31,7 @@ float setNewDistance(float distance, std::vector<int> const & permutation, int c
     }
     return bestDistance;
 }
-/// вычислить лучшую дистанцию для перестановки
+/// РІС‹С‡РёСЃР»РёС‚СЊ Р»СѓС‡С€СѓСЋ РґРёСЃС‚Р°РЅС†РёСЋ РґР»СЏ РїРµСЂРµСЃС‚Р°РЅРѕРІРєРё
 float calculateDistances(std::vector<int> permutation, float localBestDistance)
 {
     for (int i = 0; i < qPow(2, CURVE_NUMBER); i++) {
@@ -42,7 +42,7 @@ float calculateDistances(std::vector<int> permutation, float localBestDistance)
     }
     return localBestDistance;
 }
-/// метод для вычисления порции перестановок
+/// РјРµС‚РѕРґ РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РїРѕСЂС†РёРё РїРµСЂРµСЃС‚Р°РЅРѕРІРѕРє
 void calculatePackOfDistances(std::vector<int> permutation, float localBestDistance, long distancesInPack)
 {
     long i = 0;
@@ -53,7 +53,7 @@ void calculatePackOfDistances(std::vector<int> permutation, float localBestDista
     while (i < distancesInPack && std::next_permutation (permutation.begin(), permutation.end()));
 }
 
-/// поток для вычиления порции перестановок
+/// РїРѕС‚РѕРє РґР»СЏ РІС‹С‡РёР»РµРЅРёСЏ РїРѕСЂС†РёРё РїРµСЂРµСЃС‚Р°РЅРѕРІРѕРє
 class MyThread : public QRunnable {
 public:
     MyThread(std::vector<int> const & permutation, float localBestDistance, long distancesInPack)
@@ -70,7 +70,7 @@ private:
 };
 
 void doBruteForce() {
-	/// построить начальную перестановку
+	/// РїРѕСЃС‚СЂРѕРёС‚СЊ РЅР°С‡Р°Р»СЊРЅСѓСЋ РїРµСЂРµСЃС‚Р°РЅРѕРІРєСѓ
     std::vector<int> currentPermutation(CURVE_NUMBER);
 	
     for (int i = 0; i < CURVE_NUMBER; i++) {
@@ -84,15 +84,15 @@ void doBruteForce() {
     long distancesInPack = 3628800 / 8;
     do {
         if (i % distancesInPack == 0) {
-			/// запустить очередной поток для вычисления очередной порции перестановок
+			/// Р·Р°РїСѓСЃС‚РёС‚СЊ РѕС‡РµСЂРµРґРЅРѕР№ РїРѕС‚РѕРє РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РѕС‡РµСЂРµРґРЅРѕР№ РїРѕСЂС†РёРё РїРµСЂРµСЃС‚Р°РЅРѕРІРѕРє
             threadPool.start(new MyThread(currentPermutation, bestDistance, distancesInPack));
         }
         ++i;
     } while (std::next_permutation (currentPermutation.begin(), currentPermutation.end()));
-	///подождать выполнения всех потоков.
+	///РїРѕРґРѕР¶РґР°С‚СЊ РІС‹РїРѕР»РЅРµРЅРёСЏ РІСЃРµС… РїРѕС‚РѕРєРѕРІ.
     threadPool.waitForDone();
 
-	/// сохранение лучшего варианта в глобальную переменную
+	/// СЃРѕС…СЂР°РЅРµРЅРёРµ Р»СѓС‡С€РµРіРѕ РІР°СЂРёР°РЅС‚Р° РІ РіР»РѕР±Р°Р»СЊРЅСѓСЋ РїРµСЂРµРјРµРЅРЅСѓСЋ
     for (int i = 0; i < CURVE_NUMBER; i++) {
         bestCurvesOrder.append(OrientedCurve(bestPermutation[i], bestCurvePointOrderInt & 1));
         bestCurvePointOrderInt = bestCurvePointOrderInt >> 1;
